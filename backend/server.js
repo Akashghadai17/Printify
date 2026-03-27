@@ -39,6 +39,7 @@ const orderSchema = new mongoose.Schema({
   deliveryDate: String,
   deliveryTime: String,
   paymentMethod: String,
+  upiId: String,
   totalPrice: Number,
   status: { type: String, default: 'pending' },
   createdAt: { type: Date, default: Date.now }
@@ -60,7 +61,7 @@ const Subscription = mongoose.model('Subscription', subscriptionSchema);
 
 // File upload config
 const storage = multer.diskStorage({
-  destination: 'uploads/',
+  destination: path.join(__dirname, 'uploads'),
   filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
 });
 const upload = multer({ storage });
@@ -126,7 +127,7 @@ app.post('/api/login', async (req, res) => {
 });
 
 app.post('/api/orders', auth, upload.single('file'), async (req, res) => {
-  const { copies, pages, printType, bwPages, colourPages, packageType, softBinding, spiralBinding, deliveryDate, deliveryTime, paymentMethod, totalPrice } = req.body;
+  const { copies, pages, printType, bwPages, colourPages, packageType, softBinding, spiralBinding, deliveryDate, deliveryTime, paymentMethod, upiId, totalPrice } = req.body;
   const order = await Order.create({
     userId: req.user.id,
     fileName: req.file?.filename || null,
@@ -137,10 +138,9 @@ app.post('/api/orders', auth, upload.single('file'), async (req, res) => {
     copies, packageType,
     softBinding: softBinding === 'true',
     spiralBinding: spiralBinding === 'true',
-    deliveryDate, deliveryTime, paymentMethod,
+    deliveryDate, deliveryTime, paymentMethod, upiId,
     totalPrice: parseFloat(totalPrice) || 0
   });
-  // Update pages used on active subscription
   if (['Monthly','Quarterly','Half-Yearly','Yearly'].includes(packageType)) {
     await Subscription.findOneAndUpdate(
       { userId: req.user.id, plan: packageType, endDate: { $gt: new Date() } },
@@ -263,22 +263,10 @@ app.delete('/api/admin/users/:id', adminAuth, async (req, res) => {
   res.json({ message: 'User deleted successfully' });
 });
 
-app.use(express.static(path.join(__dirname)));
+app.use(express.static(path.join(__dirname, '..', 'frontend', 'dist')));
 
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'code.html'));
-});
-
-app.get('/login', (req, res) => {
-  res.sendFile(path.join(__dirname, 'login.html'));
-});
-
-app.get('/admin-login', (req, res) => {
-  res.sendFile(path.join(__dirname, 'admin-login.html'));
-});
-
-app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'admin.html'));
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'frontend', 'dist', 'index.html'));
 });
 
 const PORT = process.env.PORT || 3000;
