@@ -1,14 +1,18 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const cors = require('cors');
-const multer = require('multer');
-const path = require('path');
+require("dotenv").config({ path: __dirname + "/.env" });
+
+const express = require("express");
+const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const cors = require("cors");
+const multer = require("multer");
+const path = require("path");
 
 const app = express();
-const JWT_SECRET = 'studentprint_secret_key';
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/studentprint';
+
+const JWT_SECRET = process.env.JWT_SECRET;
+const MONGO_URI = process.env.MONGO_URI;
+console.log("Mongo URI:", MONGO_URI);
 
 app.use(cors());
 app.use(express.json());
